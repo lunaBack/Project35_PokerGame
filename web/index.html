@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三五反 · 山西阳泉四人扑克</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 顶部信息栏 -->
+    <header id="topbar">
+        <div class="brand">🂡 三五反</div>
+        <div class="info-item">局数：<b id="info-hand">-</b></div>
+        <div class="info-item">主牌：<b id="info-trump">未定</b></div>
+        <div class="info-item">庄家：<b id="info-dealer">-</b></div>
+        <div class="info-item score">闲家得分：<b id="info-score">0</b> / 100</div>
+        <div class="info-item">轮次：<b id="info-trick">-</b></div>
+        <div class="info-item">战绩 你方 <b id="info-win0">0</b> : <b id="info-win1">0</b> 对方</div>
+        <button id="btn-settings" class="mini-btn">设置</button>
+        <button id="btn-rules" class="mini-btn">查看规则</button>
+    </header>
+
+    <div id="layout">
+        <!-- 牌桌 -->
+        <main id="table">
+            <!-- 对家（上） -->
+            <div class="seat seat-top" id="seat-2">
+                <div class="avatar">🤖</div>
+                <div class="seat-name">对家（队友）<span class="badge dealer-badge hidden">庄</span></div>
+                <div class="opp-hand horizontal" id="hand-2"></div>
+            </div>
+            <!-- 左家 -->
+            <div class="seat seat-left" id="seat-3">
+                <div class="avatar">🤖</div>
+                <div class="seat-name">左家<span class="badge dealer-badge hidden">庄</span></div>
+                <div class="opp-hand vertical" id="hand-3"></div>
+            </div>
+            <!-- 右家 -->
+            <div class="seat seat-right" id="seat-1">
+                <div class="avatar">🤖</div>
+                <div class="seat-name">右家<span class="badge dealer-badge hidden">庄</span></div>
+                <div class="opp-hand vertical" id="hand-1"></div>
+            </div>
+
+            <!-- 中央出牌区 -->
+            <div id="center">
+                <div class="played played-top" id="played-2"></div>
+                <div class="played played-left" id="played-3"></div>
+                <div class="played played-right" id="played-1"></div>
+                <div class="played played-bottom" id="played-0"></div>
+                <div id="center-hint"></div>
+            </div>
+
+            <!-- 玩家（下） -->
+            <div class="seat seat-bottom" id="seat-0">
+                <div class="seat-name">你<span class="badge dealer-badge hidden">庄</span></div>
+                <div id="hand-0" class="my-hand"></div>
+            </div>
+
+            <!-- 操作栏 -->
+            <div id="action-bar" class="hidden">
+                <span id="action-msg"></span>
+                <button id="btn-hint" class="btn secondary">提示</button>
+                <button id="btn-play" class="btn primary">出牌</button>
+            </div>
+
+            <div id="toast" class="hidden"></div>
+        </main>
+
+        <!-- 日志面板 -->
+        <aside id="log-panel">
+            <div class="log-title">对局记录</div>
+            <div id="log"></div>
+        </aside>
+    </div>
+
+    <!-- 通用弹窗 -->
+    <div id="modal-mask" class="hidden">
+        <div id="modal">
+            <div id="modal-title"></div>
+            <div id="modal-body"></div>
+            <div id="modal-actions"></div>
+        </div>
+    </div>
+
+    <!-- 规则弹窗 -->
+    <div id="rules-mask" class="hidden">
+        <div id="rules-modal">
+            <div class="rules-head">《三五反》规则要点 <button id="btn-rules-close" class="mini-btn">关闭</button></div>
+            <div class="rules-body">
+                <h4>基本信息</h4>
+                <p>山西阳泉四人扑克，两两对抗（你与对家一队），54 张牌，每人 12 张，底牌 6 张。</p>
+                <h4>主牌等级（从大到小）</h4>
+                <p>方片5 → 五反 → 三反 → 大王 → 小王 → 黑桃Q → 主J → 副J（先出者大）→ 主2 → 副2（先出者大）→ 主花色 A K Q 10 9 8 7 6 5 4 3。副牌：A&gt;K&gt;Q&gt;10&gt;…&gt;3。</p>
+                <h4>真杠与假杠</h4>
+                <p>真杠＝四张同数字（A最大 2最小），首家出真杠时其余玩家只能添主牌，无主添副牌，可用更大真杠盖过。假杠＝黑桃Q+三张同数字，其余玩家只能添副牌，无副牌贴主牌，可被真杠大过。四张 Q 按真杠处理。进贡还贡所得牌不能构成真假杠。</p>
+                <h4>亮牌</h4>
+                <p>首局发牌中先亮 2 者为庄家并定主花色；其他局亮 2 仅定主花色。扣底前起到三个3/三个5可亮三反/五反（成为仅次于方片5的主牌，五反&gt;三反，亮方免进贡）。无人亮牌为断电：闲家从底牌抽牌定主（王重抽），闲家免进贡；首局断电由最先拿到 2 的玩家当庄。</p>
+                <h4>出牌</h4>
+                <p>庄家首轮先出，赢家领出下一轮。有同花色必须跟（主牌算同一花色）；首家出主牌时其余玩家有主必出主，不足才可用副牌充数；首家出副牌时无同花色可毙牌或添牌。首家可甩同花色最大的几张牌，甩牌失败改出其中最小的牌；甩牌可被"全主牌"毙杀，多家毙牌以最大单张比大小（盖毙）。</p>
+                <h4>庄家扣底</h4>
+                <p>庄家收 6 张底牌（变 18 张）后换下 6 张，换下的牌不得含 5/10/K；换下的牌直接入弃牌堆，不计分、不可被抠底，每人始终以 12 张打完本局。</p>
+                <h4>分数与结算</h4>
+                <p>5＝5分，10/K＝10分，全副 100 分，底牌不能扣分。闲家赢轮收分：0分→闲家双进贡；&lt;40→庄家连庄；≥40→庄家下台；≥60→庄家进贡上庄人；≥80→庄家方双进贡闲家。</p>
+                <h4>进贡还贡</h4>
+                <p>进贡＝手上最大主牌（无主或主牌全为分牌免）；还贡＝贡牌与分牌之外任意主牌。亮三五反一方免进贡。</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/cards.js"></script>
+    <script src="js/rules.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>

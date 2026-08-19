@@ -1,23 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-*.egg-info/
+# 依赖与构建产物
+node_modules/
 dist/
-build/
+src-tauri/target/
 
-# IDE
-.qoder/
-.vscode/
-.idea/
-*.swp
-*.swo
+# Tauri 生成的模式文件
+src-tauri/gen/schemas/
+
+# 本地构建辅助工具（NSIS 工具链等，不入库）
+.tauri-tools/
+
+# 开发过程截图
+step*.png
+final_interface.png
+app-icon.png
+
+# 日志与临时文件
+*.log
 *.txt
 
-# OS
-.DS_Store
-Thumbs.db
+# IDE
+.vscode/
+.idea/
