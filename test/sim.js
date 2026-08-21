@@ -8,7 +8,7 @@ const path = require('path');
 
 const base = path.join(__dirname, '..', 'web', 'js');
 let code = '';
-for (const f of ['cards.js', 'rules.js', 'ai.js', 'game.js']) {
+for (const f of ['cards.js', 'rules.js', 'ai.js', 'mc.js', 'game.js']) {
     code += fs.readFileSync(path.join(base, f), 'utf8') + '\n';
 }
 
@@ -29,8 +29,8 @@ const mockUI = {
     askReturnTribute(hand, ctx) { return Promise.resolve(AI.chooseReturnTribute(hand, ctx)); },
     askBury(hand, ctx) { return Promise.resolve(AI.chooseBury(hand, ctx)); },
     askPlay(player, game, isLead) {
-        if (isLead) return Promise.resolve(AI.chooseLead(player.hand, game.ctx, game.otherHands(player.idx)));
-        return Promise.resolve(AI.chooseFollow(player.hand, game.trick, game.lead, game.ctx, player.idx, (player.idx + 2) % 4));
+        if (isLead) return Promise.resolve(AI.chooseLead(player.hand, game.ctx, game.otherHands(player.idx), game, player.idx));
+        return Promise.resolve(AI.chooseFollow(player.hand, game.trick, game.lead, game.ctx, player.idx, (player.idx + 2) % 4, game));
     },
     showSettlement(game) {
         handCount++;

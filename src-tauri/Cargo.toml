@@ -7,7 +7,9 @@ edition = "2021"
 
 [lib]
 name = "sanwufan_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# 不含 cdylib：Windows-GNU 链接器对 cdylib 导出序号有 65536 上限，
+# 依赖增多（如 tokio）后会触发 "export ordinal too large"；桌面端仅需 staticlib/rlib
+crate-type = ["staticlib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -16,6 +18,10 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# 联机模块：房主端内嵌 WebSocket 服务端
+tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "macros"] }
+tokio-tungstenite = "0.24"
+futures-util = "0.3"
 
 [profile.release]
 codegen-units = 1

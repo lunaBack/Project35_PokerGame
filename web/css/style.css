@@ -126,6 +126,8 @@ body {
 .my-hand .card:hover { transform: translateY(-8px); }
 .my-hand .card.selected { transform: translateY(-22px); box-shadow: 0 0 0 2px #6fc3ff, 2px 4px 8px rgba(0,0,0,.4); }
 .my-hand .card.selected.trump-card { box-shadow: 0 0 0 2px #6fc3ff, 0 0 0 4px #e8b23a inset; }
+/* 定主预览：亮 2 弹窗中选中某花色时，手牌中该花色的牌高亮提示（非真正选中） */
+.my-hand .card.suit-hint { transform: translateY(-18px); box-shadow: 0 0 0 2px #7de8a3, 0 0 10px rgba(125, 232, 163, .55), 2px 4px 8px rgba(0,0,0,.4); }
 .my-hand.disabled .card { cursor: default; }
 .my-hand.disabled .card:hover { transform: none; }
 
@@ -236,3 +238,32 @@ body {
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #3a5573; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ============ 联机浮层 ============ */
+#net-overlay {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(0, 0, 0, .55);
+    display: flex; align-items: center; justify-content: center;
+}
+#net-overlay.hidden { display: none; }
+#net-panel {
+    background: #223448;
+    border: 1px solid #3d5a7a;
+    border-radius: 12px;
+    min-width: 420px; max-width: 560px;
+    padding: 20px 24px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    color: #e8f1fb;
+}
+#net-title { font-size: 17px; font-weight: bold; color: #ffd76e; margin-bottom: 14px; }
+.net-row { margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.net-row b {
+    font-family: Consolas, monospace;
+    font-size: 16px; color: #7ee0a3;
+    background: #0f1c2e; padding: 4px 10px; border-radius: 6px;
+    user-select: all;
+}
+#net-seats { margin: 12px 0; border-top: 1px solid #3d5a7a; border-bottom: 1px solid #3d5a7a; padding: 8px 0; }
+.net-seat-row { padding: 3px 4px; font-size: 13px; color: #cfdcea; }
+.net-wait { font-size: 12px; color: #8fa8c4; margin-bottom: 10px; }
+.net-actions { display: flex; gap: 10px; justify-content: flex-end; }

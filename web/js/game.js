@@ -124,8 +124,8 @@ class Game {
             const p = this.players[i];
             const twos = p.hand.filter(c => c.rank === '2' && c.suit !== 'joker');
             let chosen = null;
-            if (p.isHuman) {
-                chosen = await this.ui.askRevealTrump(twos, firstHand);
+            if (p.isHuman || p.remote) {
+                chosen = await this.ui.askRevealTrump(twos, firstHand, p);
             } else {
                 chosen = AI.chooseRevealTrump(p.hand, firstHand);
                 await delay(400 * speedMult());
@@ -184,8 +184,8 @@ class Game {
             const options = AI.chooseFanReveal(p.hand);
             if (options.length === 0) continue;
             let picks;
-            if (p.isHuman) {
-                picks = await this.ui.askFanReveal(options);
+            if (p.isHuman || p.remote) {
+                picks = await this.ui.askFanReveal(options, p);
             } else {
                 picks = options; // AI 总是亮（成为大主 + 免进贡）
                 await delay(400 * speedMult());
@@ -230,8 +230,8 @@ class Game {
             this.log(`${payer.name} 向 ${recv.name} 进贡 ${cardText(tri)}。`, 'important');
             // 还贡
             let back;
-            if (recv.isHuman) {
-                back = await this.ui.askReturnTribute(recv.hand, this.ctx, payer.name);
+            if (recv.isHuman || recv.remote) {
+                back = await this.ui.askReturnTribute(recv.hand, this.ctx, payer.name, recv);
             } else {
                 back = AI.chooseReturnTribute(recv.hand, this.ctx);
                 await delay(300 * speedMult());
@@ -254,8 +254,8 @@ class Game {
         this.log(`庄家 ${d.name} 收取 6 张底牌。`);
 
         let buried;
-        if (d.isHuman) {
-            buried = await this.ui.askBury(d.hand, this.ctx);
+        if (d.isHuman || d.remote) {
+            buried = await this.ui.askBury(d.hand, this.ctx, d);
         } else {
             buried = AI.chooseBury(d.hand, this.ctx);
             await delay(600 * speedMult());
@@ -321,7 +321,7 @@ class Game {
 
     async doLead(p) {
         let selected, res;
-        if (p.isHuman) {
+        if (p.isHuman || p.remote) {
             while (true) {
                 selected = await this.ui.askPlay(p, this, true);
                 res = validateLead(selected, p.hand, this.ctx, this.otherHands(p.idx));
@@ -329,7 +329,7 @@ class Game {
                 this.ui.toast(res.msg);
             }
         } else {
-            selected = AI.chooseLead(p.hand, this.ctx, this.otherHands(p.idx));
+            selected = await AI.chooseLead(p.hand, this.ctx, this.otherHands(p.idx), this, p.idx);
             res = validateLead(selected, p.hand, this.ctx, this.otherHands(p.idx));
         }
 
@@ -351,7 +351,7 @@ class Game {
 
     async doFollow(p) {
         let selected, res;
-        if (p.isHuman) {
+        if (p.isHuman || p.remote) {
             while (true) {
                 selected = await this.ui.askPlay(p, this, false);
                 res = validateFollow(selected, p.hand, this.lead, this.ctx);
@@ -360,7 +360,7 @@ class Game {
             }
         } else {
             const partner = (p.idx + 2) % 4;
-            selected = AI.chooseFollow(p.hand, this.trick, this.lead, this.ctx, p.idx, partner);
+            selected = await AI.chooseFollow(p.hand, this.trick, this.lead, this.ctx, p.idx, partner, this);
             res = validateFollow(selected, p.hand, this.lead, this.ctx);
             if (!res.ok) { // 兜底：AI 结果非法时按最小合法方式跟牌
                 selected = this.fallbackFollow(p);

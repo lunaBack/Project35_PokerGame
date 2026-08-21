@@ -16,7 +16,7 @@ const AppSettings = (() => {
         speedMult() { return ({ fast: 0.4, normal: 1, slow: 1.8 })[this.speed] || 1; },
         setSpeed(v) { this.speed = v; write('swf_speed', v); },
         setDifficulty(v) {
-            this.difficulty = v === 'easy' ? 'easy' : 'normal';
+            this.difficulty = ['easy', 'normal', 'hard'].includes(v) ? v : 'normal';
             write('swf_difficulty', this.difficulty);
             AI.setDifficulty(this.difficulty);
         },
@@ -207,10 +207,19 @@ const UI = {
     /* ==================== 交互：定主亮牌 ==================== */
     async askRevealTrump(twos, firstHand) {
         let picked = null;
-        return this.showModal(
+        // 花色预览：选中某张 2 时，手牌中该花色的牌全部高亮为"被选中"状态，定主结束后恢复原状
+        const hint = (suit) => {
+            const game = this.game;
+            if (!game || !game.players || !game.players[0]) return;
+            const ids = new Set(suit ? game.players[0].hand.filter(c => c.suit === suit).map(c => c.id) : []);
+            document.querySelectorAll('#hand-0 .card').forEach(el => {
+                el.classList.toggle('suit-hint', ids.has(Number(el.dataset.cid)));
+            });
+        };
+        const result = await this.showModal(
             firstHand ? '抢亮定主（先亮 2 者为庄家）' : '亮牌定主（亮 2 确定主牌花色）',
             body => {
-                body.innerHTML = `<p>你手中有 2，可以亮出定主${firstHand ? '并成为庄家' : ''}。选择一张 2 亮出，或选择不亮：</p>`;
+                body.innerHTML = `<p>你手中有 2，可以亮出定主${firstHand ? '并成为庄家' : ''}。选择一张 2 亮出（手牌中该花色的牌会高亮预览），或选择不亮：</p>`;
                 const row = document.createElement('div');
                 row.className = 'card-row';
                 for (const c of twos) {
@@ -219,6 +228,7 @@ const UI = {
                         picked = picked === c ? null : c;
                         row.querySelectorAll('.card').forEach(x => x.classList.remove('selected'));
                         if (picked) el.classList.add('selected');
+                        hint(picked ? picked.suit : null);
                     };
                     row.appendChild(el);
                 }
@@ -229,6 +239,8 @@ const UI = {
                 { label: '亮出定主', primary: true, value: () => picked === null ? (this.toast('请先选择一张 2'), undefined) : picked },
             ]
         );
+        hint(null);
+        return result;
     },
 
     /* ==================== 交互：亮三五反 ==================== */
@@ -380,7 +392,7 @@ const UI = {
                 const s = document.createElement('p'); s.textContent = '出牌节奏（AI 与过渡动画速度）：'; body.appendChild(s);
                 body.appendChild(radio('speed', [['fast', '快'], ['normal', '正常'], ['slow', '慢']], AppSettings.speed, v => AppSettings.setSpeed(v)));
                 const d = document.createElement('p'); d.textContent = 'AI 难度（下一局起生效）：'; body.appendChild(d);
-                body.appendChild(radio('difficulty', [['easy', '简单'], ['normal', '普通']], AppSettings.difficulty, v => AppSettings.setDifficulty(v)));
+                body.appendChild(radio('difficulty', [['easy', '简单'], ['normal', '普通'], ['hard', '困难（推演）']], AppSettings.difficulty, v => AppSettings.setDifficulty(v)));
                 const btn = document.createElement('button');
                 btn.className = 'btn secondary';
                 btn.style.marginTop = '8px';
@@ -390,6 +402,22 @@ const UI = {
                     this.toast('战绩已清零');
                 };
                 body.appendChild(btn);
+                // 联机操作：按当前角色显示关房/退房入口（对局中也能随时使用）
+                if (typeof NetHost !== 'undefined' && NetHost.active) {
+                    const netBtn = document.createElement('button');
+                    netBtn.className = 'btn secondary';
+                    netBtn.style.marginTop = '8px';
+                    netBtn.textContent = '关闭房间（断开所有房员）';
+                    netBtn.onclick = () => NetHost.closeRoom();
+                    body.appendChild(netBtn);
+                } else if (typeof NetClient !== 'undefined' && NetClient.connected) {
+                    const netBtn = document.createElement('button');
+                    netBtn.className = 'btn secondary';
+                    netBtn.style.marginTop = '8px';
+                    netBtn.textContent = '退出房间（返回主界面）';
+                    netBtn.onclick = () => NetClient.leaveRoom();
+                    body.appendChild(netBtn);
+                }
             },
             [{ label: '关闭', primary: true, value: () => true }]
         );
@@ -445,14 +473,21 @@ window.addEventListener('DOMContentLoaded', () => {
                 <p>54 张牌，每人 12 张、底牌 6 张。首局发牌后先亮 2 者为庄家并定主牌花色；
                    之后按规则进行亮三五反、庄家扣底、逐轮出牌与结算。</p>
                 <p style="color:#8fa8c4">提示：出牌阶段可点击"提示"按钮获得建议；点击右上角"查看规则"可随时查阅规则要点，
-                   也可点击<span class="rules-link" id="link-rules-quick">规则速览</span>。</p>`;
+                   也可点击<span class="rules-link" id="link-rules-quick">规则速览</span>。</p>
+                <p style="color:#8ec7ff;font-size:13px"><b>联机方法</b>：房主点「联机 · 创建房间」，把生成的<b>邀请码</b>
+                   （如 K7Q2）发给朋友（<b>跨网络也能连</b>，经公网中继转接）；朋友点「联机 · 加入房间」输入邀请码即可入座。
+                   同一局域网也可用完整邀请串直连。房主掉线则本局作废；房员掉线由 AI 自动托管，重连后可加入下一局。
+                   对局中可在「设置」里关闭/退出房间。<b>注意：所有人必须使用同一版本的程序。</b></p>`;
         },
         [
             { label: '简单开局', value: () => { AppSettings.setDifficulty('easy'); return true; } },
             { label: '标准开局', primary: true, value: () => { AppSettings.setDifficulty('normal'); return true; } },
+            { label: '联机 · 创建房间', value: () => { NetHost.start().catch(() => UI.toast('创建房间失败（仅桌面版支持）')); return null; } },
+            { label: '联机 · 加入房间', value: () => { NetClient.showJoin(); return null; } },
         ]
-    ).then(() => {
+    ).then(startSingle => {
         $('link-rules-quick')?.remove(); // 弹窗已关闭，清理引用
+        if (!startSingle) return;        // 联机入口：不启动本地单机对局
         const game = new Game(UI);
         game.playHand();
     });

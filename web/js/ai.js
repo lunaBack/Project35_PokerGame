@@ -5,9 +5,14 @@
 
 const AI = {
 
-    difficulty: 'normal', // 'easy' 简单 / 'normal' 普通
-    setDifficulty(d) { this.difficulty = d === 'easy' ? 'easy' : 'normal'; },
+    difficulty: 'normal', // 'easy' 简单 / 'normal' 普通 / 'hard' 困难（蒙特卡洛推演）
+    seatDifficulty: null,   // 按座位覆盖难度 {seatIdx: diff}，仅供评测/对战胜率统计使用
+    setDifficulty(d) { this.difficulty = ['easy', 'normal', 'hard'].includes(d) ? d : 'normal'; },
     isEasy() { return this.difficulty === 'easy'; },
+    effDifficulty(idx) {
+        if (this.seatDifficulty && idx != null && this.seatDifficulty[idx]) return this.seatDifficulty[idx];
+        return this.difficulty;
+    },
 
     /**
      * 亮主决策：手中有 2 时，评估该花色实力，够强则亮。
@@ -69,7 +74,16 @@ const AI = {
      * 领出决策。
      * @param unseen 每个花色组中"其他人手上"的最大强度 {group: maxStrength}
      */
-    chooseLead(hand, ctx, otherHands) {
+    async chooseLead(hand, ctx, otherHands, game, myIdx) {
+        // 困难档：蒙特卡洛推演（推演内部调用不传 game，天然走启发式分支，不会递归）
+        if (this.effDifficulty(myIdx) === 'hard' && game && typeof MC !== 'undefined') {
+            return MC.chooseLeadMC(game, myIdx);
+        }
+        return this.heurLead(hand, ctx, otherHands);
+    },
+
+    /** 启发式领出（供 MC 作为候选/推演策略复用） */
+    heurLead(hand, ctx, otherHands) {
         // 1) 有真杠先出真杠
         const tgs = findTrueGangs(hand, ctx);
         if (tgs.length > 0) {
@@ -127,7 +141,15 @@ const AI = {
      * @param myIdx 自己座位
      * @param partnerIdx 队友座位
      */
-    chooseFollow(hand, trick, lead, ctx, myIdx, partnerIdx) {
+    async chooseFollow(hand, trick, lead, ctx, myIdx, partnerIdx, game) {
+        if (this.effDifficulty(myIdx) === 'hard' && game && typeof MC !== 'undefined') {
+            return MC.chooseFollowMC(game, myIdx);
+        }
+        return this.heurFollow(hand, trick, lead, ctx, myIdx, partnerIdx);
+    },
+
+    /** 启发式跟牌（供 MC 作为候选/推演策略复用） */
+    heurFollow(hand, trick, lead, ctx, myIdx, partnerIdx) {
         const n = lead.count;
         const winnerNow = trickWinner(trick, lead, ctx);
         const partnerWinning = winnerNow === partnerIdx;
